@@ -45,10 +45,12 @@ func (m *Manager) SetPackSizes(sizes []int) error {
 	m.packSizes.l.Lock()
 	defer m.packSizes.l.Unlock()
 
-	m.packSizes.sizes = sizes
+	newSizes := make([]int, len(sizes))
+	copy(newSizes, sizes)
 	// sort in descending order
 	// since our algo expects a sorted array in desc order of pack sizes
-	sort.Sort(sort.Reverse(sort.IntSlice(m.packSizes.sizes)))
+	sort.Sort(sort.Reverse(sort.IntSlice(newSizes)))
+	m.packSizes.sizes = newSizes
 
 	return nil
 }
