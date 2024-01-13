@@ -58,7 +58,7 @@ func CalculatePacksHandler(pm *packs.Manager) http.HandlerFunc {
 			log.WithError(err).Error("Failed to marshal response")
 		}
 
-		log.Info("Done")
+		log.Info("CalculatePacks Done")
 	}
 }
 
@@ -87,7 +87,7 @@ func SetPackSizesHandler(pm *packs.Manager) http.HandlerFunc {
 
 		renderStatusCode(w, http.StatusOK)
 
-		log.Info("Done")
+		log.Info("SetPackSize Done")
 	}
 }
 

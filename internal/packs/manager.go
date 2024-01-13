@@ -2,7 +2,6 @@ package packs
 
 import (
 	"errors"
-	"math"
 	"sort"
 	"sync"
 )
@@ -35,25 +34,38 @@ type Pack struct {
 	Quantity int
 }
 
+// SetPackSizes sets and sorts the pack sizes in descending order for the Manager.
+//
+// It returns an error if the provided slice is empty.
 func (m *Manager) SetPackSizes(sizes []int) error {
 	if len(sizes) < 1 {
-		return errors.New("invalid lenght of pack sizes")
+		return errors.New("invalid length of pack sizes")
 	}
 
 	m.packSizes.l.Lock()
 	defer m.packSizes.l.Unlock()
 
 	m.packSizes.sizes = sizes
+	// sort in descending order
+	// since our algo expects a sorted array in desc order of pack sizes
 	sort.Sort(sort.Reverse(sort.IntSlice(m.packSizes.sizes)))
 
 	return nil
 }
 
+// CalculatePacks calculates the optimal number of packs needed to fullfil the item order
+//
+// Returns an error if less then 0 items are ordered.
 func (m *Manager) CalculatePacks(itemOrder int) ([]Pack, error) {
 	packs := []Pack{}
 
 	if itemOrder < 0 {
 		return packs, errors.New("invalid item order")
+	}
+
+	// early exit
+	if itemOrder == 0 {
+		return packs, nil
 	}
 
 	results := m.calculatePacksCombination(itemOrder)
@@ -69,49 +81,26 @@ func (m *Manager) CalculatePacks(itemOrder int) ([]Pack, error) {
 	return packs, nil
 }
 
-// packInfo stores the number of packs and the total items for a given order size
-type packInfo struct {
-	NumPacks   int
-	TotalItems int
-}
-
-func (m *Manager) calculatePacksDynamic(order int) map[int]int {
-	sort.Ints(m.packSizes.sizes)
-
-	// Initialize the dynamic programming table
-	dp := make([]packInfo, order+1)
-	for i := range dp {
-		dp[i] = packInfo{NumPacks: math.MaxInt32, TotalItems: 0}
-	}
-	dp[0] = packInfo{NumPacks: 0, TotalItems: 0}
-
-	for _, size := range m.packSizes.sizes {
-		for i := size; i <= order; i++ {
-			if dp[i-size].NumPacks+1 < dp[i].NumPacks || (dp[i-size].NumPacks+1 == dp[i].NumPacks && dp[i-size].TotalItems+size < dp[i].TotalItems) {
-				dp[i].NumPacks = dp[i-size].NumPacks + 1
-				dp[i].TotalItems = dp[i-size].TotalItems + size
-			}
-		}
-	}
-
-	// Backtrack to find the combination of packs
-	result := make(map[int]int)
-	for i := order; i > 0; {
-		for _, size := range m.packSizes.sizes {
-			if i-size >= 0 && dp[i].NumPacks == dp[i-size].NumPacks+1 && dp[i].TotalItems == dp[i-size].TotalItems+size {
-				result[size]++
-				i -= size
-				break
-			}
-		}
-	}
-
-	return result
-}
-
+// calculatePacksCombination computes the optimal combination of pack sizes to fulfill a given order.
+// The function aims to minimize the number of packs used and the excess number of items sent, while ensuring the order is fully met.
+// If the order is smaller than the smallest pack size, it simply returns one pack of the smallest size.
+//
+// It uses a recursive approach to explore all possible combinations of the available pack sizes.
+// During the recursion, it keeps track of the combination that results in the least number of excess items and the least number of packs.
+// Once all combinations have been considered, it returns the most efficient combination found.
+//
+// NOTE: brute force approach since we are not expecting large number of pack sizes
+// TODO: there is a more optimized solution using Dynamic Programming
 func (m *Manager) calculatePacksCombination(order int) map[int]int {
-	sort.Sort(sort.Reverse(sort.IntSlice(m.packSizes.sizes)))
 	bestCombination := make(map[int]int)
+
+	// early exit
+	if order < m.packSizes.sizes[len(m.packSizes.sizes)-1] {
+		bestCombination[m.packSizes.sizes[len(m.packSizes.sizes)-1]] = 1
+
+		return bestCombination
+	}
+
 	leastExcess := order
 	leastPacks := order
 
