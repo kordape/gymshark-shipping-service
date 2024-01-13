@@ -78,6 +78,11 @@ func (m *Manager) CalculatePacks(itemOrder int) ([]Pack, error) {
 		}
 	}
 
+	// sort the output in ascending pack size order
+	sort.Slice(packs, func(i, j int) bool {
+		return packs[i].Size < packs[j].Size
+	})
+
 	return packs, nil
 }
 
