@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  packs-service:
+    build: ./
+    image: packs-service:latest
+    container_name: packs-service
+    ports:
+      - 80:80
