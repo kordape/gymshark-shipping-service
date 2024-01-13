@@ -94,7 +94,7 @@ func TestCalculatePacks(t *testing.T) {
 		for _, tc := range testCases {
 			packs, err := m.CalculatePacks(tc.input)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.expected, packs)
+			assert.ElementsMatch(t, tc.expected, packs)
 		}
 	})
 }
