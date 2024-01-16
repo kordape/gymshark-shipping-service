@@ -19,8 +19,8 @@ func TestSetPackSizes(t *testing.T) {
 		err := m.SetPackSizes([]int{500, 200, 1000, 300})
 		assert.Nil(t, err)
 
-		expected := []int{1000, 500, 300, 200}
-		assert.Equal(t, expected, m.packSizes.sizes)
+		expected := []int{200, 300, 500, 1000}
+		assert.Equal(t, expected, m.(*Manager).packSizes.sizes)
 	})
 
 }
@@ -31,14 +31,6 @@ func TestCalculatePacks(t *testing.T) {
 		packs, err := m.CalculatePacks(-1)
 		assert.Empty(t, packs)
 		assert.EqualError(t, err, "invalid item order")
-	})
-
-	t.Run("Zero order", func(t *testing.T) {
-		m := NewManager()
-		packs, err := m.CalculatePacks(0)
-		assert.NotNil(t, packs)
-		assert.Empty(t, packs)
-		assert.NoError(t, err)
 	})
 
 	t.Run("Zero order", func(t *testing.T) {

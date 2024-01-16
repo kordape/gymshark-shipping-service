@@ -20,7 +20,7 @@ type Server struct {
 	log  *logrus.Entry
 	port int
 	srv  *http.Server
-	pm   *packs.Manager
+	pm   packs.PacksManager
 }
 
 type Option func(s *Server)
@@ -37,7 +37,7 @@ func WithPort(p int) Option {
 	}
 }
 
-func NewServer(pm *packs.Manager, opts ...Option) (*Server, error) {
+func NewServer(pm packs.PacksManager, opts ...Option) (*Server, error) {
 	s := Server{
 		log:  logrus.NewEntry(logrus.StandardLogger()),
 		port: defaultPort,

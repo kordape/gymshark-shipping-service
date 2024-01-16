@@ -2,12 +2,18 @@ package packs
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"sync"
 )
 
+type PacksManager interface {
+	SetPackSizes(sizes []int) error
+	CalculatePacks(itemOrder int) ([]Pack, error)
+}
+
 var defaultPackSizes = packSizes{
-	sizes: []int{5000, 2000, 1000, 500, 250},
+	sizes: []int{250, 500, 1000, 2000, 5000},
 	l:     &sync.Mutex{},
 }
 
@@ -20,7 +26,7 @@ type Manager struct {
 	packSizes packSizes
 }
 
-func NewManager() *Manager {
+func NewManager() PacksManager {
 
 	m := Manager{
 		packSizes: defaultPackSizes,
@@ -47,9 +53,9 @@ func (m *Manager) SetPackSizes(sizes []int) error {
 
 	newSizes := make([]int, len(sizes))
 	copy(newSizes, sizes)
-	// sort in descending order
-	// since our algo expects a sorted array in desc order of pack sizes
-	sort.Sort(sort.Reverse(sort.IntSlice(newSizes)))
+	// sort in ascending order
+	// since our algo expects a sorted array in asc order of pack sizes
+	sort.Ints(newSizes)
 	m.packSizes.sizes = newSizes
 
 	return nil
@@ -70,7 +76,7 @@ func (m *Manager) CalculatePacks(itemOrder int) ([]Pack, error) {
 		return packs, nil
 	}
 
-	results := m.calculatePacksCombination(itemOrder)
+	results := m.calculatePacksDynamic(itemOrder)
 	for s, q := range results {
 		if q > 0 {
 			packs = append(packs, Pack{
@@ -88,55 +94,66 @@ func (m *Manager) CalculatePacks(itemOrder int) ([]Pack, error) {
 	return packs, nil
 }
 
-// calculatePacksCombination computes the optimal combination of pack sizes to fulfill a given order.
+type packCombination struct {
+	LeastExcess     int
+	LeastPacks      int
+	PackCombination map[int]int
+}
+
+// calculatePacksDynamic computes the optimal combination of pack sizes to fulfill a given order.
 // The function aims to minimize the number of packs used and the excess number of items sent, while ensuring the order is fully met.
 // If the order is smaller than the smallest pack size, it simply returns one pack of the smallest size.
 //
-// It uses a recursive approach to explore all possible combinations of the available pack sizes.
-// During the recursion, it keeps track of the combination that results in the least number of excess items and the least number of packs.
-// Once all combinations have been considered, it returns the most efficient combination found.
-//
-// NOTE: brute force approach since we are not expecting large number of pack sizes
-// TODO: there is a more optimized solution using Dynamic Programming
-func (m *Manager) calculatePacksCombination(order int) map[int]int {
-	bestCombination := make(map[int]int)
-
-	// early exit
-	if order < m.packSizes.sizes[len(m.packSizes.sizes)-1] {
-		bestCombination[m.packSizes.sizes[len(m.packSizes.sizes)-1]] = 1
-
-		return bestCombination
+// It uses a dynamic programming approach to explore the optimal solution
+func (m *Manager) calculatePacksDynamic(order int) map[int]int {
+	if order < m.packSizes.sizes[0] {
+		return map[int]int{
+			m.packSizes.sizes[0]: 1,
+		}
 	}
 
-	leastExcess := order
-	leastPacks := order
+	packSizes := m.packSizes.sizes
 
-	// Recursive function to find the best combination of packs
-	var findCombination func(int, map[int]int, int, int)
-	findCombination = func(index int, currentCombination map[int]int, currentTotal int, currentPacks int) {
-		if currentTotal >= order {
-			excess := currentTotal - order
-			if excess < leastExcess || (excess == leastExcess && currentPacks < leastPacks) {
-				leastExcess = excess
-				leastPacks = currentPacks
-				// Copy currentCombination to bestCombination
-				bestCombination = make(map[int]int)
-				for k, v := range currentCombination {
-					bestCombination[k] = v
+	// Initialize DP array
+	dp := make([]packCombination, order+1)
+	for i := range dp {
+		dp[i].LeastExcess = math.MaxInt32
+		dp[i].LeastPacks = math.MaxInt32
+		dp[i].PackCombination = make(map[int]int)
+	}
+
+	// Base case: 0 order size
+	dp[0] = packCombination{0, 0, make(map[int]int)}
+
+	// Fill the DP table
+	for i := 1; i <= order; i++ {
+		for _, size := range packSizes {
+			if size <= i {
+				leftOver := i - size
+				excess := dp[leftOver].LeastExcess
+				packs := dp[leftOver].LeastPacks + 1
+				combination := make(map[int]int)
+				for k, v := range dp[leftOver].PackCombination {
+					combination[k] = v
+				}
+				combination[size]++
+
+				if excess < dp[i].LeastExcess || (excess == dp[i].LeastExcess && dp[leftOver].LeastPacks <= dp[i].LeastPacks) {
+					dp[i].LeastPacks = packs
+					dp[i].LeastExcess = excess
+					dp[i].PackCombination = combination
+				}
+			} else {
+				excess := size - i
+				packs := 1
+				if excess < dp[i].LeastExcess || (excess == dp[i].LeastExcess && packs < dp[i].LeastPacks) {
+					dp[i].LeastPacks = 1
+					dp[i].LeastExcess = size - i
+					dp[i].PackCombination = map[int]int{size: 1}
 				}
 			}
-			return
-		}
-
-		for i := index; i < len(m.packSizes.sizes); i++ {
-			size := m.packSizes.sizes[i]
-			currentCombination[size]++
-			findCombination(i, currentCombination, currentTotal+size, currentPacks+1)
-			currentCombination[size]--
 		}
 	}
 
-	findCombination(0, make(map[int]int), 0, 0)
-
-	return bestCombination
+	return dp[order].PackCombination
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func CalculatePacksHandler(pm *packs.Manager) http.HandlerFunc {
+func CalculatePacksHandler(pm packs.PacksManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logrus.NewEntry(logrus.StandardLogger())
 		body, err := io.ReadAll(r.Body)
@@ -62,7 +62,7 @@ func CalculatePacksHandler(pm *packs.Manager) http.HandlerFunc {
 	}
 }
 
-func SetPackSizesHandler(pm *packs.Manager) http.HandlerFunc {
+func SetPackSizesHandler(pm packs.PacksManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logrus.NewEntry(logrus.StandardLogger())
 		body, err := io.ReadAll(r.Body)
