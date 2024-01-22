@@ -49,6 +49,10 @@ func TestCalculatePacks(t *testing.T) {
 			expected []Pack
 		}{
 			{
+				input:    0,
+				expected: []Pack{},
+			},
+			{
 				input: 1,
 				expected: []Pack{
 					{Size: 250, Quantity: 1},
