@@ -41,7 +41,7 @@ func TestCalculatePacks(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Valid orders", func(t *testing.T) {
+	t.Run("Valid orders with defaul sizes", func(t *testing.T) {
 		m := NewManager()
 
 		testCases := []struct {
@@ -79,6 +79,74 @@ func TestCalculatePacks(t *testing.T) {
 					{Size: 5000, Quantity: 2},
 					{Size: 2000, Quantity: 1},
 					{Size: 250, Quantity: 1},
+				},
+			},
+			{
+				input: 500000,
+				expected: []Pack{
+					{Size: 5000, Quantity: 100},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			packs, err := m.CalculatePacks(tc.input)
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, tc.expected, packs)
+		}
+	})
+
+	t.Run("Valid orders with custom sizes", func(t *testing.T) {
+		m := NewManager()
+		err := m.SetPackSizes([]int{
+			12, 45, 100, 234, 654,
+		})
+		assert.NoError(t, err)
+
+		testCases := []struct {
+			input    int
+			expected []Pack
+		}{
+			{
+				input: 1,
+				expected: []Pack{
+					{Size: 12, Quantity: 1},
+				},
+			},
+			{
+				input: 46,
+				expected: []Pack{
+					{Size: 12, Quantity: 4},
+				},
+			},
+			{
+				input: 53,
+				expected: []Pack{
+					{Size: 45, Quantity: 1},
+					{Size: 12, Quantity: 1},
+				},
+			},
+			{
+				input: 234,
+				expected: []Pack{
+					{Size: 234, Quantity: 1},
+				},
+			},
+			{
+				input: 5002,
+				expected: []Pack{
+					{Size: 654, Quantity: 7},
+					{Size: 234, Quantity: 1},
+					{Size: 100, Quantity: 1},
+					{Size: 45, Quantity: 2},
+				},
+			},
+			{
+				input: 200000,
+				expected: []Pack{
+					{Size: 654, Quantity: 303},
+					{Size: 234, Quantity: 7},
+					{Size: 100, Quantity: 2},
 				},
 			},
 		}

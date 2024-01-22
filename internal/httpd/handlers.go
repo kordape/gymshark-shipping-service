@@ -80,7 +80,7 @@ func SetPackSizesHandler(pm packs.PacksManager) http.HandlerFunc {
 		}
 
 		if err := pm.SetPackSizes(req.Sizes); err != nil {
-			log.WithError(err).Error("Failed to calculate packs")
+			log.WithError(err).Error("Failed to set packs")
 			renderStatusCode(w, http.StatusInternalServerError)
 			return
 		}
