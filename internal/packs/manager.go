@@ -35,6 +35,7 @@ func NewManager() PacksManager {
 	return &m
 }
 
+// Pack represents a pack size and the quantity of packs needed to fulfill an order.
 type Pack struct {
 	Size     int
 	Quantity int
