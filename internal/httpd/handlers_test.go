@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -119,7 +118,7 @@ func TestCalculatePacksHandler(t *testing.T) {
 		pm := &mockPackManager{}
 		handler := CalculatePacksHandler(pm)
 
-		req := httptest.NewRequest(http.MethodPost, "/calculate", ioutil.NopCloser(bytes.NewBufferString("{invalid json")))
+		req := httptest.NewRequest(http.MethodPost, "/calculate", io.NopCloser(bytes.NewBufferString("{invalid json")))
 		rr := httptest.NewRecorder()
 
 		handler.ServeHTTP(rr, req)
