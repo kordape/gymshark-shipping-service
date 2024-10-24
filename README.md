@@ -45,3 +45,5 @@ Example set pack sizes request:
 ```
 curl -v --header "Content-Type: application/json" --request POST --data '{"sizes": [31, 23, 53]}' http://127.0.0.1/packs
 ```
+
+Live demo can be accessed [here](http://gymshark-shipping-calculator.s3-website.eu-central-1.amazonaws.com/)

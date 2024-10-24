@@ -57,6 +57,7 @@ func NewServer(pm packs.PacksManager, opts ...Option) (*Server, error) {
 		Handler: handlers.CORS(
 			handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Language", "Origin", "Content-Type"}),
 			handlers.AllowedOrigins([]string{"*"}),
+			handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
 		)(s.routes()),
 	}
 
