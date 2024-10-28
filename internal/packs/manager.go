@@ -139,7 +139,7 @@ func (m *Manager) calculatePacksDynamic(order int) map[int]int {
 				}
 				combination[size]++
 
-				if excess < dp[i].LeastExcess || (excess == dp[i].LeastExcess && dp[leftOver].LeastPacks <= dp[i].LeastPacks) {
+				if excess < dp[i].LeastExcess || (excess == dp[i].LeastExcess && packs <= dp[i].LeastPacks) {
 					dp[i].LeastPacks = packs
 					dp[i].LeastExcess = excess
 					dp[i].PackCombination = combination
